@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>EcoCharge Jeonbuk AI — 분석 리포트</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;background:#f0f2f5;color:#2c3e50}
+  .hero{background:linear-gradient(135deg,#1a252f,#2c3e50 55%,#27ae60);
+         color:#fff;padding:44px 60px;text-align:center}
+  .hero h1{font-size:30px;margin-bottom:8px}
+  .hero p{font-size:14px;opacity:.8}
+  .kpi-bar{display:flex;gap:14px;padding:20px 48px;background:#fff;
+            border-bottom:2px solid #ecf0f1;flex-wrap:wrap}
+  .kpi{flex:1;min-width:120px;background:#f8f9fa;border-radius:10px;
+        padding:14px 12px;text-align:center}
+  .kpi .val{font-size:26px;font-weight:700;color:#27ae60}
+  .kpi .lbl{font-size:11px;color:#888;margin-top:4px}
+  .container{max-width:1300px;margin:0 auto;padding:28px 40px}
+  .card{background:#fff;border-radius:12px;margin-bottom:28px;
+         box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden}
+  .card-hdr{padding:14px 22px;background:#2c3e50;color:#fff;
+             display:flex;align-items:center;gap:14px}
+  .step-num{background:#27ae60;padding:3px 11px;border-radius:16px;font-size:11px;font-weight:700}
+  .step-title{font-size:16px;font-weight:700}
+  .step-desc{font-size:11px;opacity:.7;margin-left:auto}
+  .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:22px}
+  .chart-box{position:relative;height:300px}
+  .chart-box.tall{height:380px}
+  table{width:100%;border-collapse:collapse}
+  th{background:#ecf0f1;padding:8px 10px;font-size:11px;text-align:left;white-space:nowrap}
+  td{padding:7px 10px;font-size:12px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+  tr:hover{background:#fafafa}
+  .bar-wrap{background:#eee;border-radius:4px;height:16px;width:180px}
+  .bar-fill{height:16px;border-radius:4px;color:#fff;font-size:10px;
+             line-height:16px;padding-left:5px;min-width:30px;font-weight:700}
+  .reason{color:#666;font-size:11px;max-width:240px}
+  .footer{text-align:center;padding:28px;color:#aaa;font-size:11px}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>⚡ EcoCharge Jeonbuk AI</h1>
+  <p>전북특별자치도 수소·전기차 충전 인프라 최적 입지 추천 플랫폼</p>
+  <p style="margin-top:6px;font-size:13px">2026 전북특별자치도 공공데이터 AI 활용 창업경진대회</p>
+</div>
+
+<div class="kpi-bar">
+  <div class="kpi"><div class="val">9,409</div><div class="lbl">전북 전기차 등록(대)</div></div>
+  <div class="kpi"><div class="val">236</div><div class="lbl">분석 관광지(개소)</div></div>
+  <div class="kpi"><div class="val">2,979</div><div class="lbl">산업단지 업체(개)</div></div>
+  <div class="kpi"><div class="val">14</div><div class="lbl">분석 시군 수</div></div>
+  <div class="kpi"><div class="val">5</div><div class="lbl">정책 시나리오</div></div>
+  <div class="kpi"><div class="val">군산시</div><div class="lbl">ESS 1순위 시군</div></div>
+</div>
+
+<div class="container">
+
+<!-- STEP 1 -->
+<div class="card">
+  <div class="card-hdr">
+    <span class="step-num">STEP 1</span>
+    <span class="step-title">데이터 통합</span>
+    <span class="step-desc">전기차·관광지·산업단지·버스정류장 공공데이터를 시군 단위로 통합</span>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-box"><canvas id="c1a"></canvas></div>
+    <div class="chart-box"><canvas id="c1b"></canvas></div>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div class="card">
+  <div class="card-hdr">
+    <span class="step-num">STEP 2</span>
+    <span class="step-title">충전 수요 예측</span>
+    <span class="step-desc">현재 EV 수요 + 관광·산업 잠재 수요 결합</span>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-box"><canvas id="c2a"></canvas></div>
+    <div class="chart-box"><canvas id="c2b"></canvas></div>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div class="card">
+  <div class="card-hdr">
+    <span class="step-num">STEP 3</span>
+    <span class="step-title">충전 공급 사각지대 분석</span>
+    <span class="step-desc">기존 충전 인프라 공백 점수 → 우선 개선 지역 탐지</span>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-box"><canvas id="c3a"></canvas></div>
+    <div class="chart-box"><canvas id="c3b"></canvas></div>
+  </div>
+</div>
+
+<!-- STEP 4 -->
+<div class="card">
+  <div class="card-hdr">
+    <span class="step-num">STEP 4</span>
+    <span class="step-title">ESS 입지 적합성 점수</span>
+    <span class="step-desc">5개 차원 가중합 → EcoCharge Suitability Score 산출</span>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-box tall"><canvas id="c4a"></canvas></div>
+    <div class="chart-box tall"><canvas id="c4b"></canvas></div>
+  </div>
+</div>
+
+<!-- STEP 5 -->
+<div class="card">
+  <div class="card-hdr">
+    <span class="step-num">STEP 5</span>
+    <span class="step-title">정책 시나리오 시뮬레이션</span>
+    <span class="step-desc">5가지 시나리오별 우선순위 변화 비교</span>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-box tall"><canvas id="c5a"></canvas></div>
+    <div class="chart-box tall"><canvas id="c5b"></canvas></div>
+  </div>
+</div>
+
+<!-- STEP 6 -->
+<div class="card">
+  <div class="card-hdr">
+    <span class="step-num">STEP 6</span>
+    <span class="step-title">AI 리포트 — 최종 입지 추천</span>
+    <span class="step-desc">ESS 구성 분해 + 설명 가능 AI 추천 이유</span>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-box tall"><canvas id="c6a"></canvas></div>
+    <div class="chart-box tall"><canvas id="c6b"></canvas></div>
+  </div>
+</div>
+
+<!-- 순위표 -->
+<div class="card">
+  <div class="card-hdr">
+    <span class="step-num">📋</span>
+    <span class="step-title">ESS 종합 순위표</span>
+    <span class="step-desc">AI 추천 이유 포함 전체 시군 순위</span>
+  </div>
+  <div style="padding:16px;overflow-x:auto">
+  <table>
+    <thead><tr>
+      <th>순위</th><th>시군</th><th>ESS 점수</th>
+      <th>전기차(30%)</th><th>관광(25%)</th><th>산업(20%)</th>
+      <th>버스(15%)</th><th>공백(10%)</th><th>AI 추천 이유</th>
+    </tr></thead>
+    <tbody>
+        <tr>
+          <td style="color:#c0392b;font-weight:700">#1</td>
+          <td style="font-weight:600">군산시</td>
+          <td>
+            <div class="bar-wrap">
+              <div class="bar-fill" style="width:70%;background:#c0392b">70.5</div>
+            </div>
+          </td>
+          <td>33</td>
+          <td>83</td>
+          <td>100</td>
+          <td>100</td>
+          <td>50</td>
+          <td class="reason">관광지 밀집 - 외지 방문객 충전 수요 높음 (점수 83/100) · 산업단지 집중 - 상용차·출퇴근 충전 수요 발생 (점수 …</td>
+        </tr>
+        <tr>
+          <td style="color:#e67e22;font-weight:700">#2</td>
+          <td style="font-weight:600">전주시</td>
+          <td>
+            <div class="bar-wrap">
+              <div class="bar-fill" style="width:58%;background:#e67e22">58.7</div>
+            </div>
+          </td>
+          <td>100</td>
+          <td>48</td>
+          <td>22</td>
+          <td>50</td>
+          <td>50</td>
+          <td class="reason">전기차 등록 밀도 상위권 (점수 100/100)</td>
+        </tr>
+        <tr>
+          <td style="color:#f1c40f;font-weight:700">#3</td>
+          <td style="font-weight:600">익산시</td>
+          <td>
+            <div class="bar-wrap">
+              <div class="bar-fill" style="width:52%;background:#f1c40f">52.2</div>
+            </div>
+          </td>
+          <td>34</td>
+          <td>100</td>
+          <td>60</td>
+          <td>0</td>
+          <td>50</td>
+          <td class="reason">관광지 밀집 - 외지 방문객 충전 수요 높음 (점수 100/100) · 산업단지 집중 - 상용차·출퇴근 충전 수요 발생 (점수…</td>
+        </tr>
+        <tr>
+          <td style="color:#27ae60;font-weight:700">#4</td>
+          <td style="font-weight:600">완주군</td>
+          <td>
+            <div class="bar-wrap">
+              <div class="bar-fill" style="width:31%;background:#27ae60">31.0</div>
+            </div>
+          </td>
+          <td>11</td>
+          <td>65</td>
+          <td>32</td>
+          <td>0</td>
+          <td>50</td>
+          <td class="reason">관광지 밀집 - 외지 방문객 충전 수요 높음 (점수 65/100)</td>
+        </tr>
+        <tr>
+          <td style="color:#2980b9;font-weight:700">#5</td>
+          <td style="font-weight:600">정읍시</td>
+          <td>
+            <div class="bar-wrap">
+              <div class="bar-fill" style="width:29%;background:#2980b9">29.9</div>
+            </div>
+          </td>
+          <td>11</td>
+          <td>70</td>
+          <td>20</td>
+          <td>0</td>
+          <td>50</td>
+          <td class="reason">관광지 밀집 - 외지 방문객 충전 수요 높음 (점수 70/100)</td>
+        </tr>
+        <tr>
+          <td style="color:#8e44ad;font-weight:700">#6</td>
+          <td style="font-weight:600">남원시</td>
+          <td>
+            <div class="bar-wrap">
+              <div class="bar-fill" style="width:28%;background:#8e44ad">28.9</div>
+            </div>
+          </td>
+          <td>7</td>
+          <td>83</td>
+          <td>6</td>
+          <td>0</td>
+          <td>50</td>
+          <td class="reason">관광지 밀집 - 외지 방문객 충전 수요 높음 (점수 83/100)</td>
+        </tr>
+        <tr>
+          <td style="color:#16a085;font-weight:700">#7</td>
+          <td style="font-weight:600">김제시</td>
+          <td>
+            <div class="bar-wrap">
+              <div class="bar-fill" style="width:21%;background:#16a085">21.7</div>
+            </div>
+          </td>
+          <td>6</td>
+          <td>39</td>
+          <td>25</td>
+          <td>0</td>
+          <td>50</td>
+          <td class="reason">복합 지표 중간 수준 - 균형적 설치 고려 필요</td>
+        </tr>
+        <tr>
+          <td style="color:#d35400;font-weight:700">#8</td>
+          <td style="font-weight:600">부안군</td>
+          <td>
+            <div class="bar-wrap">
+              <div class="bar-fill" style="width:20%;background:#d35400">20.9</div>
+            </div>
+          </td>
+          <td>7</td>
+          <td>52</td>
+          <td>3</td>
+          <td>0</td>
+          <td>50</td>
+          <td class="reason">복합 지표 중간 수준 - 균형적 설치 고려 필요</td>
+        </tr>
+        <tr>
+          <td style="color:#2c3e50;font-weight:700">#9</td>
+          <td style="font-weight:600">임실군</td>
+          <td>
+            <div class="bar-wrap">
+              <div class="bar-fill" style="width:18%;background:#2c3e50">18.8</div>
+            </div>
+          </td>
+          <td>2</td>
+          <td>52</td>
+          <td>1</td>
+          <td>0</td>
+          <td>50</td>
+          <td class="reason">복합 지표 중간 수준 - 균형적 설치 고려 필요</td>
+        </tr>
+        <tr>
+          <td style="color:#7f8c8d;font-weight:700">#10</td>
+          <td style="font-weight:600">진안군</td>
+          <td>
+            <div class="bar-wrap">
+              <div class="bar-fill" style="width:17%;background:#7f8c8d">17.4</div>
+            </div>
+          </td>
+          <td>2</td>
+          <td>43</td>
+          <td>4</td>
+          <td>0</td>
+          <td>50</td>
+          <td class="reason">복합 지표 중간 수준 - 균형적 설치 고려 필요</td>
+        </tr>
+        <tr>
+          <td style="color:#1abc9c;font-weight:700">#11</td>
+          <td style="font-weight:600">무주군</td>
+          <td>
+            <div class="bar-wrap">
+              <div class="bar-fill" style="width:15%;background:#1abc9c">15.5</div>
+            </div>
+          </td>
+          <td>2</td>
+          <td>39</td>
+          <td>0</td>
+          <td>0</td>
+          <td>50</td>
+          <td class="reason">복합 지표 중간 수준 - 균형적 설치 고려 필요</td>
+        </tr>
+        <tr>
+          <td style="color:#e74c3c;font-weight:700">#12</td>
+          <td style="font-weight:600">장수군</td>
+          <td>
+            <div class="bar-wrap">
+              <div class="bar-fill" style="width:12%;background:#e74c3c">12.7</div>
+            </div>
+          </td>
+          <td>0</td>
+          <td>30</td>
+          <td>1</td>
+          <td>0</td>
+          <td>50</td>
+          <td class="reason">복합 지표 중간 수준 - 균형적 설치 고려 필요</td>
+        </tr>
+        <tr>
+          <td style="color:#3498db;font-weight:700">#13</td>
+          <td style="font-weight:600">고창군</td>
+          <td>
+            <div class="bar-wrap">
+              <div class="bar-fill" style="width:11%;background:#3498db">11.7</div>
+            </div>
+          </td>
+          <td>4</td>
+          <td>17</td>
+          <td>5</td>
+          <td>0</td>
+          <td>50</td>
+          <td class="reason">복합 지표 중간 수준 - 균형적 설치 고려 필요</td>
+        </tr>
+        <tr>
+          <td style="color:#9b59b6;font-weight:700">#14</td>
+          <td style="font-weight:600">순창군</td>
+          <td>
+            <div class="bar-wrap">
+              <div class="bar-fill" style="width:5%;background:#9b59b6">5.7</div>
+            </div>
+          </td>
+          <td>2</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>50</td>
+          <td class="reason">복합 지표 중간 수준 - 균형적 설치 고려 필요</td>
+        </tr></tbody>
+  </table>
+  </div>
+</div>
+
+</div><!-- container -->
+<div class="footer">EcoCharge Jeonbuk AI · 전북특별자치도 공공데이터 기반 충전 인프라 입지 분석 · 2026</div>
+
+<script>
+const L  = ["군산시", "전주시", "익산시", "완주군", "정읍시", "남원시", "김제시", "부안군", "임실군", "진안군", "무주군", "장수군", "고창군", "순창군"];
+const EV = [1442, 3314, 1609, 611, 600, 382, 326, 365, 107, 145, 142, 23, 235, 108];
+const TU = [24, 16, 28, 20, 21, 24, 14, 17, 17, 15, 14, 12, 9, 5];
+const IN = [807.0, 261.0, 689.0, 317.0, 238.0, 81.0, 297.0, 50.0, 29.0, 73.0, 18.0, 23.0, 71.0, 25.0];
+const BU = [11025.0, 5472.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+const ES = [70.5, 58.7, 52.2, 31.0, 29.9, 28.9, 21.7, 20.9, 18.8, 17.4, 15.5, 12.7, 11.7, 5.7];
+const sEV  = [32.7686080125682, 100.0, 33.85293534221175, 11.121341168819045, 11.332086748153472, 6.903605283710517, 6.330925097703085, 7.368580734303241, 1.6997705616329553, 2.2914655932474113, 2.3750053079363598, 0.0, 4.293135287415447, 1.8351583969787297];
+const sTU  = [82.6086956521739, 47.82608695652174, 100.0, 65.21739130434783, 69.56521739130434, 82.6086956521739, 39.130434782608695, 52.17391304347826, 52.17391304347826, 43.47826086956522, 39.130434782608695, 30.434782608695656, 17.391304347826086, 0.0];
+const sIN  = [100.0, 21.58528464168885, 60.41558571131122, 31.614850049113244, 20.485278372966825, 6.099387242745978, 25.137054994036454, 3.238030313028923, 1.1240966618766142, 4.291986665379334, 0.0, 0.5114269552238978, 5.130403045789504, 0.8120943552512028];
+const sBU  = [100.0, 49.63265306122449, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+const sGAP = [50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0];
+const CL   = ["#c0392b", "#e67e22", "#f1c40f", "#27ae60", "#2980b9", "#8e44ad", "#16a085", "#d35400", "#2c3e50", "#7f8c8d", "#1abc9c", "#e74c3c", "#3498db", "#9b59b6"];
+const SN   = ["기본 균형", "관광 우선", "산업단지 우선", "충전 사각지대 해소", "대중교통 연계"];
+const SD   = {"기본 균형": {"군산시": 70.5, "전주시": 58.7, "익산시": 52.2, "완주군": 31.0, "정읍시": 29.9, "남원시": 28.9, "김제시": 21.7, "부안군": 20.9, "임실군": 18.8, "진안군": 17.4, "무주군": 15.5, "장수군": 12.7, "고창군": 11.7, "순창군": 5.7}, "관광 우선": {"군산시": 74.6, "전주시": 53.6, "익산시": 63.6, "완주군": 41.7, "정읍시": 42.6, "남원시": 46.3, "김제시": 28.6, "부안군": 32.4, "임실군": 31.3, "진안군": 27.8, "무주군": 25.5, "장수군": 21.2, "고창군": 16.5, "순창군": 7.9}, "산업단지 우선": {"군산시": 79.8, "전주시": 46.9, "익산시": 49.0, "완주군": 28.0, "정읍시": 23.4, "남원시": 17.4, "김제시": 21.5, "부안군": 13.1, "임실군": 11.1, "진안군": 11.7, "무주군": 9.4, "장수군": 8.3, "고창군": 9.9, "순창군": 5.7}, "충전 사각지대 해소": {"군산시": 62.3, "전주시": 54.3, "익산시": 51.1, "완주군": 39.6, "정읍시": 39.2, "남원시": 39.0, "김제시": 34.3, "부안군": 34.3, "임실군": 33.2, "진안군": 32.3, "무주군": 31.2, "장수군": 29.6, "고창군": 28.8, "순창군": 25.4}, "대중교통 연계": {"군산시": 80.6, "전주시": 55.2, "익산시": 38.3, "완주군": 22.5, "정읍시": 21.8, "남원시": 21.3, "김제시": 15.4, "부안군": 14.9, "임실군": 13.4, "진안군": 12.3, "무주군": 10.8, "장수군": 8.7, "고창군": 7.6, "순창군": 3.0}};
+const lineDS = [{"label": "\uad70\uc0b0\uc2dc", "data": [70.5, 74.6, 79.8, 62.3, 80.6], "borderColor": "#c0392b", "backgroundColor": "#c0392b33", "tension": 0.3, "pointRadius": 6, "borderWidth": 2}, {"label": "\uc804\uc8fc\uc2dc", "data": [58.7, 53.6, 46.9, 54.3, 55.2], "borderColor": "#2980b9", "backgroundColor": "#2980b933", "tension": 0.3, "pointRadius": 6, "borderWidth": 2}, {"label": "\uc775\uc0b0\uc2dc", "data": [52.2, 63.6, 49.0, 51.1, 38.3], "borderColor": "#27ae60", "backgroundColor": "#27ae6033", "tension": 0.3, "pointRadius": 6, "borderWidth": 2}];
+
+const def_bar = (label,data,bg)=>{return{label,data,backgroundColor:bg,borderRadius:4}};
+const hbar = (ctx,labels,datasets,title)=>new Chart(ctx,{
+  type:'bar',
+  data:{labels,datasets},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:datasets.length>1},title:{display:true,text:title,font:{size:12}}},
+    scales:{x:{grid:{color:'#f0f0f0'}},y:{ticks:{font:{size:10}}}}}
+});
+const vbar = (ctx,labels,datasets,title)=>new Chart(ctx,{
+  type:'bar',
+  data:{labels,datasets},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:datasets.length>1},title:{display:true,text:title,font:{size:12}}},
+    scales:{y:{grid:{color:'#f0f0f0'}},x:{ticks:{font:{size:9},maxRotation:40}}}}
+});
+
+// STEP1
+hbar(document.getElementById('c1a').getContext('2d'),
+  L,[def_bar('전기차 등록 대수',EV,'#3498db')],'전기차 등록 대수 (대)');
+hbar(document.getElementById('c1b').getContext('2d'),
+  L,[def_bar('관광지 수',TU,'#8e44ad')],'관광지 수 (개소)');
+
+// STEP2
+vbar(document.getElementById('c2a').getContext('2d'), L,
+  [def_bar('전기차 수요',sEV,'#3498db88'),
+   def_bar('관광 잠재수요',sTU,'#8e44ad88'),
+   def_bar('산업 잠재수요',sIN,'#e67e2288')],
+  '시군별 충전 수요 구성 (점수)');
+vbar(document.getElementById('c2b').getContext('2d'), L,
+  [def_bar('버스정류장 이용량',BU,'#27ae6088'),
+   def_bar('산업단지 업체수',IN,'#e67e2288')],
+  '교통·산업 접근성 지표');
+
+// STEP3
+const gapSorted = [...L.map((l,i)=>{return{l,g:sGAP[i]}})]
+  .sort((a,b)=>b.g-a.g);
+vbar(document.getElementById('c3a').getContext('2d'),
+  gapSorted.map(x=>x.l),
+  [{label:'충전 공백 점수',
+    data:gapSorted.map(x=>x.g),
+    backgroundColor:gapSorted.map(x=>x.g>60?'#c0392b':x.g>40?'#e67e22':'#27ae60'),
+    borderRadius:4}],
+  '시군별 충전 인프라 공백 점수 (높을수록 사각지대)');
+const latent = sTU.map((t,i)=>+(t*0.5+sIN[i]*0.3+sBU[i]*0.2).toFixed(1));
+new Chart(document.getElementById('c3b').getContext('2d'),{
+  type:'scatter',
+  data:{datasets:[{
+    label:'시군',
+    data:sEV.map((e,i)=>{return{x:e,y:latent[i],label:L[i]}}),
+    backgroundColor:CL,
+    pointRadius:8,
+  }]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},title:{display:true,text:'현재 수요 vs 잠재 수요 분포',font:{size:12}},
+      tooltip:{callbacks:{label:c=>c.raw.label+' ('+c.raw.x.toFixed(0)+', '+c.raw.y.toFixed(0)+')'}}},
+    scales:{
+      x:{title:{display:true,text:'현재 EV 수요 점수'}},
+      y:{title:{display:true,text:'잠재 수요 점수'}}
+    }}
+});
+
+// STEP4
+vbar(document.getElementById('c4a').getContext('2d'), L,
+  [{label:'ESS 종합 점수',data:ES,backgroundColor:CL,borderRadius:4}],
+  'EcoCharge Suitability Score 순위');
+const top5L = L.slice(0,5);
+new Chart(document.getElementById('c4b').getContext('2d'),{
+  type:'bar',
+  data:{labels:top5L,
+    datasets:[
+      {label:'전기차(30%)',data:sEV.slice(0,5).map(v=>+(v*0.3).toFixed(1)),backgroundColor:'#3498db88',borderRadius:2},
+      {label:'관광(25%)', data:sTU.slice(0,5).map(v=>+(v*0.25).toFixed(1)),backgroundColor:'#8e44ad88',borderRadius:2},
+      {label:'산업(20%)', data:sIN.slice(0,5).map(v=>+(v*0.20).toFixed(1)),backgroundColor:'#e67e2288',borderRadius:2},
+      {label:'버스(15%)', data:sBU.slice(0,5).map(v=>+(v*0.15).toFixed(1)),backgroundColor:'#27ae6088',borderRadius:2},
+      {label:'공백(10%)', data:sGAP.slice(0,5).map(v=>+(v*0.10).toFixed(1)),backgroundColor:'#e74c3c88',borderRadius:2},
+    ]},
+  options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true}},
+    plugins:{legend:{position:'bottom',labels:{font:{size:10}}},
+      title:{display:true,text:'상위 5개 시군 ESS 구성 요소 분해',font:{size:12}}}}
+});
+
+// STEP5 — 시나리오별 순위 히트맵 (막대로 대체)
+const scenarioESS = SN.map(sn=>L.map(l=>SD[sn][l]));
+new Chart(document.getElementById('c5a').getContext('2d'),{
+  type:'bar',
+  data:{labels:L,
+    datasets:SN.map((sn,i)=>{
+      const colors2=['#c0392b','#e67e22','#f1c40f','#27ae60','#2980b9'];
+      return{label:sn,data:scenarioESS[i],backgroundColor:colors2[i]+'99',borderRadius:2};
+    })},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{font:{size:9}}},
+      title:{display:true,text:'시나리오별 시군 ESS 비교',font:{size:12}}},
+    scales:{x:{ticks:{font:{size:9},maxRotation:40}},y:{max:100}}}
+});
+new Chart(document.getElementById('c5b').getContext('2d'),{
+  type:'line',
+  data:{labels:SN,datasets:lineDS},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom'},
+      title:{display:true,text:'상위 3개 시군 — 시나리오별 ESS 변화',font:{size:12}}},
+    scales:{x:{ticks:{font:{size:9}}},y:{min:0,max:100}}}
+});
+
+// STEP6
+new Chart(document.getElementById('c6a').getContext('2d'),{
+  type:'bar',
+  data:{labels:top5L,
+    datasets:[
+      {label:'전기차 수요', data:sEV.slice(0,5),backgroundColor:'#3498db',borderRadius:3},
+      {label:'관광 수요',   data:sTU.slice(0,5),backgroundColor:'#8e44ad',borderRadius:3},
+      {label:'산업 수요',   data:sIN.slice(0,5),backgroundColor:'#e67e22',borderRadius:3},
+      {label:'버스 접근',   data:sBU.slice(0,5),backgroundColor:'#27ae60',borderRadius:3},
+      {label:'충전 공백',   data:sGAP.slice(0,5),backgroundColor:'#e74c3c',borderRadius:3},
+    ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{font:{size:10}}},
+      title:{display:true,text:'상위 5개 시군 5차원 점수 비교 (100점 만점)',font:{size:12}}},
+    scales:{y:{max:100}}}
+});
+vbar(document.getElementById('c6b').getContext('2d'),L.slice().reverse(),
+  [{label:'ESS 최종 점수',data:ES.slice().reverse(),
+    backgroundColor:CL.slice().reverse(),borderRadius:4}],
+  '전체 시군 ESS 최종 순위');
+
+</script>
+</body>
+</html>
